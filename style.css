@@ -1,0 +1,92 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: #0b0d17;
+  color: #f3ead2;
+  font-family: "Trebuchet MS", system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12px;
+  user-select: none;
+}
+#game { display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
+#stage { position: relative; line-height: 0; }
+#view {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: none;
+  border: 3px solid #4b2e17;
+  border-radius: 4px;
+  background: #000;
+}
+#status {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #2a1a0e;
+  border: 2px solid #4b2e17;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+#status b { color: #ffd45e; font-variant-numeric: tabular-nums; }
+#status .grow { flex: 1; color: #9fe07a; font-weight: bold; white-space: nowrap; overflow: hidden; }
+#minimap {
+  image-rendering: pixelated;
+  border: 1px solid #6b4423;
+  background: #10132a;
+  cursor: pointer;
+  width: 240px;
+  height: 40px;
+}
+#panel { display: flex; gap: 4px; }
+#panel button {
+  flex: 1;
+  min-width: 0;
+  background: linear-gradient(#6b4423, #4b2e17);
+  color: #f3ead2;
+  border: 2px solid #8a5a2b;
+  border-radius: 4px;
+  padding: 3px 0 4px;
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+#panel button:hover { border-color: #e8c15a; }
+#panel button.selected { background: linear-gradient(#a8742f, #7a4d1f); border-color: #ffe08a; box-shadow: 0 0 6px #ffd45e; }
+#panel button.empty canvas { opacity: 0.35; }
+#panel button.active { background: linear-gradient(#2f6b3a, #1d4724); border-color: #8be07a; }
+#panel button.armed { background: linear-gradient(#a3261d, #6b1712); border-color: #ff8a7a; }
+#panel .num { font-size: 15px; font-weight: bold; color: #ffd45e; min-height: 18px; font-variant-numeric: tabular-nums; }
+#panel .lbl { font-size: 11px; opacity: 0.85; }
+#panel canvas { width: 42px; height: 36px; image-rendering: pixelated; }
+#panel .glyph { font-size: 22px; line-height: 36px; height: 36px; }
+#help { margin: 2px 0 0; font-size: 13px; color: #a99f88; line-height: 1.6; }
+kbd {
+  background: #2a1a0e; border: 1px solid #6b4423; border-radius: 3px;
+  padding: 0 4px; font-family: inherit; font-size: 12px; color: #f3ead2;
+}
+#overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(8, 10, 22, 0.72);
+  line-height: 1.4;
+}
+#overlay.hidden { display: none; }
+.card {
+  background: #2a1a0e; border: 3px solid #8a5a2b; border-radius: 8px;
+  padding: 18px 28px; text-align: center; max-width: 80%;
+}
+.card h1 { margin: 0 0 10px; color: #ffd45e; font-size: 28px; }
+.card p { margin: 4px 0; }
+.card button {
+  margin-top: 14px; font: inherit; font-size: 18px; padding: 6px 22px;
+  background: linear-gradient(#2f6b3a, #1d4724); color: #fff;
+  border: 2px solid #8be07a; border-radius: 6px; cursor: pointer;
+}

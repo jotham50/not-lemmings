@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flock Off!</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game">
+    <div id="stage">
+      <canvas id="view" width="320" height="160"></canvas>
+      <div id="overlay" class="hidden">
+        <div class="card">
+          <h1 id="ov-title"></h1>
+          <div id="ov-body"></div>
+          <button id="ov-button"></button>
+        </div>
+      </div>
+    </div>
+    <div id="status">
+      <span id="hover" class="grow">&nbsp;</span>
+      <span>Out <b id="out">0</b></span>
+      <span>In <b id="in">0%</b></span>
+      <span>Time <b id="time">5-00</b></span>
+      <canvas id="minimap" width="240" height="40" title="Click or drag to scroll"></canvas>
+    </div>
+    <div id="panel"></div>
+    <p id="help">
+      Click a skill (or press <kbd>1</kbd>–<kbd>8</kbd>), then click a chicken.
+      Scroll with <kbd>←</kbd><kbd>→</kbd>, the mouse at the screen edge, or the mini-map.
+      <kbd>-</kbd>/<kbd>+</kbd> release rate &middot; <kbd>P</kbd> pause &middot; <kbd>F</kbd> fast-forward &middot;
+      <kbd>N</kbd> twice to nuke &middot; <kbd>M</kbd> mute &middot; <kbd>R</kbd> restart
+    </p>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/terrain.js"></script>
+  <script src="js/chicken.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
