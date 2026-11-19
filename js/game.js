@@ -22,40 +22,76 @@
   ctx.imageSmoothingEnabled = false;
 
   // ------------------------------------------------------------------ background
-  function makeBackground(W, H, seed) {
+  const THEMES = {
+    dusk:   { sky: ['#121838', '#33295a', '#7a4566'], stars: 160, orb: '#f7efc8', orbY: 26, hills: ['#2c2550', '#211c3e'], trees: '#1a1631' },
+    dawn:   { sky: ['#2b3a6b', '#b8738c', '#f2bf88'], stars: 25, orb: '#fff1c4', orbY: 70, hills: ['#5a4a78', '#43395e'], trees: '#3a3152' },
+    day:    { sky: ['#3f86d4', '#86c0ee', '#d4ecf9'], stars: 0, orb: '#fff6c8', orbY: 22, hills: ['#7fa8c8', '#6a93b3'], trees: '#5a829f', clouds: true },
+    sunset: { sky: ['#3a1f4a', '#b84d3a', '#f2a541'], stars: 10, orb: '#ffd36b', orbY: 82, hills: ['#6b2f3f', '#4e2232'], trees: '#3b1a27' },
+    night:  { sky: ['#04060d', '#0d1530', '#1e2b52'], stars: 260, orb: '#e8eefc', orbY: 20, hills: ['#151d38', '#0e1429'], trees: '#0a0f20' },
+    cave:   { cave: true },
+  };
+
+  function makeBackground(W, H, seed, themeName) {
+    const th = THEMES[themeName] || THEMES.dusk;
     const rng = mulberry32(seed);
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const x = c.getContext('2d');
+    if (th.cave) {
+      // Dark rocky cave wall.
+      const img = x.createImageData(W, H);
+      const px = new Uint32Array(img.data.buffer);
+      for (let yy = 0; yy < H; yy++)
+        for (let xx = 0; xx < W; xx++) {
+          const n = valueNoise(xx / 9, yy / 6, seed) * 0.7 + valueNoise(xx / 3, yy / 3, seed + 5) * 0.3;
+          const v = 14 + n * 26;
+          px[yy * W + xx] = rgba(Math.round(v * 1.25), Math.round(v), Math.round(v * 0.8));
+        }
+      x.putImageData(img, 0, 0);
+      for (let i = 0; i < W / 25; i++) { // glowing crystals
+        x.fillStyle = rng() < 0.5 ? 'rgba(120,200,255,0.5)' : 'rgba(200,140,255,0.45)';
+        x.fillRect(Math.floor(rng() * W), Math.floor(rng() * H), 1, 2);
+      }
+      return c;
+    }
     const g = x.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#121838');
-    g.addColorStop(0.5, '#33295a');
-    g.addColorStop(1, '#7a4566');
+    g.addColorStop(0, th.sky[0]);
+    g.addColorStop(0.5, th.sky[1]);
+    g.addColorStop(1, th.sky[2]);
     x.fillStyle = g;
     x.fillRect(0, 0, W, H);
-    for (let i = 0; i < 160; i++) {
+    for (let i = 0; i < th.stars * W / 960; i++) {
       x.fillStyle = `rgba(255,255,230,${0.3 + rng() * 0.7})`;
       x.fillRect(Math.floor(rng() * W), Math.floor(rng() * H * 0.55), 1, 1);
     }
-    // moon
-    x.fillStyle = '#f7efc8';
-    x.beginPath(); x.arc(W * 0.62, 26, 9, 0, Math.PI * 2); x.fill();
-    x.fillStyle = '#e2d7a8';
-    x.fillRect(Math.round(W * 0.62) - 3, 23, 3, 2);
-    x.fillRect(Math.round(W * 0.62) + 2, 29, 2, 2);
+    // sun / moon
+    const ox = Math.round(W * 0.62);
+    x.fillStyle = th.orb;
+    x.beginPath(); x.arc(ox, th.orbY, 9, 0, Math.PI * 2); x.fill();
+    if (th.stars > 100) {
+      x.fillStyle = 'rgba(0,0,0,0.1)';
+      x.fillRect(ox - 3, th.orbY - 3, 3, 2);
+      x.fillRect(ox + 2, th.orbY + 3, 2, 2);
+    }
+    if (th.clouds) {
+      x.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let i = 0; i < W / 120; i++) {
+        const cx = rng() * W, cy = 15 + rng() * 40;
+        for (let k = 0; k < 5; k++) { x.beginPath(); x.arc(cx + k * 5, cy + Math.sin(k * 2) * 2, 4 + rng() * 3, 0, Math.PI * 2); x.fill(); }
+      }
+    }
     // distant hills
-    const layers = [['#2c2550', 0.48, 9], ['#211c3e', 0.62, 6]];
-    for (const [col, base, amp] of layers) {
+    [[th.hills[0], 0.48, 9], [th.hills[1], 0.62, 6]].forEach(([col, base, amp]) => {
       x.fillStyle = col;
       const off = rng() * 100;
       for (let px = 0; px < W; px++) {
         const top = H * base + Math.sin(px * 0.013 + off) * amp + Math.sin(px * 0.041 + off * 2) * amp * 0.4;
         x.fillRect(px, Math.round(top), 1, H);
       }
-    }
+    });
     // little silhouetted trees on the far hills
-    x.fillStyle = '#1a1631';
-    for (let i = 0; i < 14; i++) {
+    x.fillStyle = th.trees;
+    for (let i = 0; i < W / 70; i++) {
       const tx = Math.floor(rng() * W), ty = Math.floor(H * 0.6 + rng() * 6);
       x.fillRect(tx, ty - 6, 1, 6);
       x.beginPath(); x.arc(tx + 0.5, ty - 8, 3 + rng() * 2, 0, Math.PI * 2); x.fill();
@@ -72,8 +108,11 @@
       this.W = def.width; this.H = def.height;
       this.terrain = new Terrain(this.W, this.H);
       def.paint(this.terrain);
-      this.terrain.colorize(def.seed);
-      this.bg = makeBackground(this.W, this.H, def.seed);
+      this.terrain.colorize(def.seed, def.theme !== 'cave');
+      this.bg = makeBackground(this.W, this.H, def.seed, def.theme);
+      this.entrances = def.entrances || [def.entrance];
+      this.water = def.water || [];
+      this.fire = def.fire || [];
       this.chickens = [];
       this.particles = [];
       this.skills = { ...def.skills };
@@ -91,7 +130,7 @@
       this.running = false;
       this.finished = false;
       this.endDelay = -1;
-      this.camX = Math.max(0, Math.min(this.W - VW, def.entrance.x - 60));
+      this.camX = Math.max(0, Math.min(this.W - VW, this.entrances[0].x - 60));
       Chicken.nextId = 1;
     }
 
@@ -109,8 +148,10 @@
       }
       if (this.hatch >= 1 && !this.nuking && this.released < this.def.total) {
         if (--this.releaseIn <= 0) {
-          const e = this.def.entrance;
-          this.chickens.push(new Chicken(e.x, e.y));
+          const e = this.entrances[this.released % this.entrances.length];
+          const c = new Chicken(e.x, e.y);
+          c.dir = e.dir || 1;
+          this.chickens.push(c);
           this.released++;
           this.releaseIn = this.releaseInterval();
         }
@@ -125,7 +166,14 @@
       for (const c of this.chickens) if (!c.dead) c.update(this);
       this.chickens = this.chickens.filter((c) => !c.dead);
 
+      for (const c of this.chickens) {
+        if (c.state === 'burning' && Math.random() < 0.7) this.burst(c.x, c.y - 6, 1, ['#ff9b2e', '#ffd45e', '#555'], 0.8);
+      }
+      for (const f of this.fire) {
+        if (Math.random() < f.w / 60) this.particles.push({ x: f.x + Math.random() * f.w, y: f.y - f.h, vx: 0, vy: -0.6, life: 14, color: '#ffb340', ember: true });
+      }
       for (const p of this.particles) {
+        if (p.ember) { p.y += p.vy; p.x += Math.sin(p.life) * 0.3; p.life--; continue; }
         p.vy += 0.18; p.x += p.vx; p.y += p.vy; p.life--;
         if (this.terrain.solid(p.x, p.y)) { p.vx *= -0.3; p.vy *= -0.3; p.y -= 1; }
       }
@@ -147,8 +195,10 @@
       }
       return false;
     }
-    inWater(x, y) {
-      return this.def.water.some((w) => x >= w.x && x < w.x + w.w && y >= w.y + 3);
+    hazardAt(x, y) {
+      if (this.water.some((w) => x >= w.x && x < w.x + w.w && y >= w.y + 3)) return 'water';
+      if (this.fire.some((f) => x >= f.x && x < f.x + f.w && y > f.y - f.h && y <= f.y + 2)) return 'fire';
+      return null;
     }
     atExit(x, y) {
       const e = this.def.exit;
@@ -314,6 +364,21 @@
     }
   }
 
+  function drawFire(f, t, camX) {
+    const x0 = f.x - camX;
+    if (x0 > VW || x0 + f.w < 0) return;
+    for (let i = 0; i < f.w; i++) {
+      const n = Math.sin((f.x + i) * 1.7 + t * 0.012) + Math.sin((f.x + i) * 0.9 - t * 0.017);
+      const h = Math.max(2, Math.round(f.h * (0.6 + n * 0.2) + ((i * 7 + (t >> 6)) % 3)));
+      ctx.fillStyle = '#c4281c'; ctx.fillRect(x0 + i, f.y - h, 1, h);
+      ctx.fillStyle = '#ff8a1f'; ctx.fillRect(x0 + i, f.y - Math.round(h * 0.7), 1, Math.round(h * 0.7));
+      ctx.fillStyle = '#ffd94a'; ctx.fillRect(x0 + i, f.y - Math.round(h * 0.35), 1, Math.round(h * 0.35));
+    }
+    // logs
+    ctx.fillStyle = '#4b2e17';
+    for (let i = 0; i < f.w; i += 7) ctx.fillRect(x0 + i, f.y - 2, 5, 2);
+  }
+
   function render(g, now) {
     const camX = Math.round(g.camX);
     ctx.drawImage(g.bg, camX, 0, VW, VH, 0, 0, VW, VH);
@@ -321,7 +386,8 @@
     ctx.drawImage(g.terrain.canvas, camX, 0, VW, VH, 0, 0, VW, VH);
 
     drawExit(g.def.exit.x - camX, g.def.exit.y, g.tick);
-    drawEntrance(g.def.entrance.x - camX, g.def.entrance.y, g.hatch, g.tick);
+    for (const e of g.entrances) drawEntrance(e.x - camX, e.y, g.hatch, g.tick);
+    for (const f of g.fire) drawFire(f, now, camX);
 
     for (const c of g.chickens) {
       const sx = c.x - camX;
@@ -330,12 +396,13 @@
       if (c.state === 'drowning') y += Math.min(10, c.timer >> 1);
       if (c.state === 'ohno') x += (c.anim & 1) ? 1 : -1;
       if (c.state === 'exiting') ctx.globalAlpha = Math.max(0, 1 - c.timer / 10);
+      if (c.state === 'burning') { ctx.globalAlpha = (c.timer & 2) ? 0.4 : 1; y -= Math.min(4, c.timer >> 2); }
       Sprites.draw(ctx, c.frame(), c.dir, x, y);
       ctx.globalAlpha = 1;
       if (c.fuse > 0 && c.active) drawDigit(ctx, Math.ceil(c.fuse * TICK_MS / 1000), sx - 1, c.y - 18);
     }
 
-    for (const w of g.def.water) drawWater(w, now, camX);
+    for (const w of g.water) drawWater(w, now, camX);
 
     for (const p of g.particles) {
       ctx.fillStyle = p.color;
@@ -376,7 +443,9 @@
     mctx.fillRect(0, 0, mw, mh);
     mctx.drawImage(g.terrain.canvas, 0, 0, g.W, g.H, 0, 0, mw, mh);
     mctx.fillStyle = 'rgba(40,110,200,0.9)';
-    for (const w of g.def.water) mctx.fillRect(w.x * sx, w.y * sy, w.w * sx, w.h * sy);
+    for (const w of g.water) mctx.fillRect(w.x * sx, w.y * sy, w.w * sx, w.h * sy);
+    mctx.fillStyle = 'rgba(255,120,30,0.95)';
+    for (const f of g.fire) mctx.fillRect(f.x * sx, (f.y - f.h) * sy, f.w * sx, f.h * sy);
     mctx.fillStyle = '#e0352b';
     mctx.fillRect(g.def.exit.x * sx - 2, g.def.exit.y * sy - 4, 4, 4);
     mctx.fillStyle = '#ffe14d';
@@ -457,15 +526,41 @@
     $('overlay').classList.remove('hidden');
   }
 
+  // Unlocked levels are remembered in this browser (if storage is available).
+  const Progress = {
+    session: 0,
+    get() {
+      let v = 0;
+      try { v = parseInt(localStorage.getItem('flockoff.unlocked') || '0', 10) || 0; } catch (e) { /* no storage */ }
+      return Math.min(LEVELS.length - 1, Math.max(v, this.session));
+    },
+    unlock(i) {
+      i = Math.min(LEVELS.length - 1, i);
+      this.session = Math.max(this.session, i);
+      try { if (i > (parseInt(localStorage.getItem('flockoff.unlocked') || '0', 10) || 0)) localStorage.setItem('flockoff.unlocked', String(i)); } catch (e) { /* ignore */ }
+    },
+  };
+
   function showIntro(g) {
     const d = g.def;
-    showOverlay(`Level ${g.levelIndex + 1}`, `
-      <p><b>${d.name}</b></p>
+    const unlocked = Progress.get();
+    const i = g.levelIndex;
+    const nav = (dir, ok) => `<button class="nav" data-go="${i + dir}" ${ok ? '' : 'disabled'}>${dir < 0 ? '\u25C0' : '\u25B6'}</button>`;
+    showOverlay(`Level ${i + 1} of ${LEVELS.length}`, `
+      <div class="levelnav">${nav(-1, i > 0)}<b>${d.name}</b>${nav(1, i < unlocked)}</div>
       <p>Number of chickens: <b>${d.total}</b></p>
       <p>Save at least <b>${d.required}</b> (${Math.round(d.required * 100 / d.total)}%)</p>
-      <p>Release rate <b>${d.releaseRate}</b> &middot; Time <b>${Math.floor(d.timeLimit / 60)} minutes</b></p>
+      <p>Release rate <b>${d.releaseRate}</b> &middot; Time <b>${fmtTime(d.timeLimit)}</b></p>
       <p style="opacity:.75;font-size:14px;margin-top:10px">${d.hint}</p>`,
-    'Let’s cluck!', () => { g.running = true; });
+    'Let\u2019s cluck!', () => { g.running = true; });
+    for (const b of document.querySelectorAll('#ov-body .nav')) {
+      b.onclick = () => { Sfx.init(); Sfx.play('select'); startLevel(+b.dataset.go); };
+    }
+  }
+
+  function fmtTime(secs) {
+    const m = Math.floor(secs / 60), s = secs % 60;
+    return s ? `${m}:${String(s).padStart(2, '0')}` : `${m} minute${m === 1 ? '' : 's'}`;
   }
 
   function showResults(g) {
@@ -477,11 +572,12 @@
       ? (g.saved === g.def.total ? 'Every single chicken made it home. Egg-cellent!' : 'Enough chickens made it home to roost. Well done!')
       : (g.saved === 0 ? 'Not a single chicken made it. That’s fowl.' : 'Not enough chickens made it home. Try again!');
     const hasNext = g.levelIndex + 1 < LEVELS.length;
+    if (won) Progress.unlock(g.levelIndex + 1);
     setTimeout(() => showOverlay(won ? 'Level complete!' : 'Out of chickens', `
       <p>You rescued <b>${pct}%</b> (${g.saved} of ${g.def.total}).</p>
       <p>You needed <b>${need}%</b>.</p>
       <p style="margin-top:8px">${msg}</p>
-      ${won && !hasNext ? '<p style="opacity:.75;font-size:14px">More levels coming soon!</p>' : ''}`,
+      ${won && !hasNext ? '<p style="opacity:.75;font-size:14px">That was the final level. The whole flock salutes you!</p>' : ''}`,
     won && hasNext ? 'Next level' : 'Play again',
     () => startLevel(won && hasNext ? g.levelIndex + 1 : g.levelIndex)), 400);
   }
@@ -615,7 +711,9 @@
 
   buildPanel();
   resize();
-  startLevel(0);
+  const param = parseInt(new URLSearchParams(location.search).get('level') || '', 10);
+  if (param >= 1 && param <= LEVELS.length) { Progress.session = param - 1; startLevel(param - 1); }
+  else startLevel(Progress.get());
   requestAnimationFrame(frame);
 
   // Exposed for automated tests.

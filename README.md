@@ -12,7 +12,25 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 
 ## How it works
 
-Chickens drop out of the coop and walk forward on their own. They step up and down small slopes and turn around when they hit a wall. A chicken dies if it falls too far, walks into water or falls off the bottom of the map. Save the required number of chickens before time runs out.
+Chickens drop out of the coop and walk forward on their own. They step up and down small slopes and turn around when they hit a wall. A chicken dies if it falls too far, walks into water or fire, or falls off the bottom of the map. Save the required number of chickens before time runs out.
+
+## Levels
+
+There are 11 levels, and each one is a little harder than the last. Winning a level unlocks the next one, and your browser remembers what you've unlocked. Use the ◀ ▶ arrows on the level intro screen to go back to earlier levels. You can also jump straight to any level with `index.html?level=N`.
+
+| # | Name | What it teaches |
+|---|------|-----------------|
+| 1 | Why Did the Chicken Cross the Barnyard? | Bash, build, dig: the basics |
+| 2 | Mind the Gap | Holding the flock with a Blocker, then freeing it with an Exploder |
+| 3 | Steel Yourself | Steel can't be broken, so mine underneath it |
+| 4 | Stairway to Hen-ven | Chaining Builders to climb a cliff |
+| 5 | Hot Foot | Fire hazards: bridge over one, dig under the other |
+| 6 | Tunnel Vision | Underground: switch from Basher to Miner at steel |
+| 7 | Ka-Bwak! | Build up, then bash through from the top step |
+| 8 | The Long Drop | A miner start window between a steel slab and a fatal drop |
+| 9 | Pecking Order | 40 chickens at a faster release rate |
+| 10 | Two Coops, One Barn | Two hatches and a four-staircase climb |
+| 11 | The Final Roost | Everything together, with a lone Climber clearing the way |
 
 | Key | Skill | What it does |
 |-----|-------|--------------|
@@ -53,6 +71,6 @@ js/game.js       simulation loop, rendering, input, UI
 
 ### Adding a level
 
-Add an object to the `LEVELS` array in `js/levels.js`. Give it its size, the number of chickens and how many must be saved, its skill counts, the entrance and exit positions, and any water rectangles. Then write a `paint(t)` function that builds the terrain with `t.fill`, `t.fillEllipse`, `t.fillSurface` and `t.carve`. Pass `MAT_STEEL` to make a part indestructible.
+Add an object to the `LEVELS` array in `js/levels.js`. Give it its size, the number of chickens and how many must be saved, its skill counts, the entrance and exit positions, and any `water` rectangles. Optionally add `fire` rectangles, a `theme` (`dusk`, `dawn`, `day`, `sunset`, `night` or `cave`) and `entrances` (an array, for more than one hatch). Then write a `paint(t)` function that builds the terrain with `t.fill`, `t.fillEllipse`, `t.fillSurface` and `t.carve`. Pass `MAT_STEEL` to make a part indestructible.
 
 All art, sound, names and levels are original.

@@ -86,12 +86,16 @@ class Chicken {
         break;
       case 'splatting': if (this.timer >= 16) g.lose(this); return;
       case 'drowning': if (this.timer >= 24) g.lose(this); return;
+      case 'burning': if (this.timer >= 16) g.lose(this); return;
       case 'exiting': if (this.timer >= 10) g.save(this); return;
     }
     if (this.dead) return;
 
-    if (this.active && g.inWater(this.x, this.y)) {
+    const hazard = this.active ? g.hazardAt(this.x, this.y) : null;
+    if (hazard === 'water') {
       this.set('drowning'); this.fuse = -1; Sfx.play('drown');
+    } else if (hazard === 'fire') {
+      this.set('burning'); this.fuse = -1; Sfx.play('burn');
     } else if (this.active && this.state !== 'blocking' && this.state !== 'climbing' && g.atExit(this.x, this.y)) {
       this.set('exiting'); this.fuse = -1; Sfx.play('exit');
     } else if (this.y > T.h + 12) {
@@ -113,6 +117,17 @@ class Chicken {
       this.x = nx;
       this.y -= h;
     } else {
+      // Hop a 1-pixel gap onto a ledge that is within stepping range (e.g. a staircase
+      // that stops just short of a cliff).
+      const fx = nx + this.dir;
+      if (!T.solid(nx, this.y) && !T.solid(nx, this.y + 1) && T.solid(fx, this.y + 1)) {
+        for (let h = -1; h <= STEP_UP; h++) {
+          if (T.solid(fx, this.y - h) && !T.solid(fx, this.y - h - 1)) {
+            if (!T.solid(fx, this.y - h - 2)) { this.x = fx; this.y -= h; return; }
+            break;
+          }
+        }
+      }
       this.x = nx;
       this.settle(T);
     }
@@ -216,7 +231,7 @@ class Chicken {
     const names = {
       walking: ability || 'Walker', falling: 'Faller', floating: 'Flapper', climbing: 'Climber',
       building: 'Builder', bashing: 'Basher', mining: 'Miner', digging: 'Digger', blocking: 'Blocker',
-      shrugging: 'Shrugger', ohno: 'Panicking', splatting: 'Splat', drowning: 'Drowning', exiting: 'Home',
+      shrugging: 'Shrugger', ohno: 'Panicking', splatting: 'Splat', drowning: 'Drowning', burning: 'Roasting', exiting: 'Home',
     };
     return names[this.state] || this.state;
   }
@@ -235,6 +250,7 @@ class Chicken {
       case 'shrugging': return 'fall1';
       case 'ohno': return 'ohno';
       case 'splatting': return 'splat';
+      case 'burning': return (a >> 1) & 1 ? 'fall2' : 'fall1';
       default: return (a >> 1) & 1 ? 'walk2' : 'walk1';
     }
   }

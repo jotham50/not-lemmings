@@ -60,6 +60,7 @@ const Sfx = (() => {
     splat: () => { noise(0.18, 0.5, 500); tone('sine', 140, 50, 0.18, 0.35); },
     drown: () => { for (let i = 0; i < 4; i++) tone('sine', 700 - i * 90, 250, 0.08, 0.15, i * 0.07); },
     exit: () => { tone('square', 700, 1500, 0.12, 0.12); tone('square', 1000, 2000, 0.1, 0.1, 0.1); },
+    burn: () => { noise(0.4, 0.4, 3000); tone('sawtooth', 900, 200, 0.3, 0.12); },
     tick: () => tone('square', 2200, 2200, 0.025, 0.08),
     ohno: () => { tone('triangle', 1100, 400, 0.35, 0.22); },
     clink: () => tone('triangle', 2000, 1700, 0.08, 0.2),

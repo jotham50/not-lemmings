@@ -79,20 +79,25 @@ class Terrain {
   carve(x0, y0, w, h) { this.fill(x0, y0, w, h, MAT_EMPTY); }
 
   // Give every pixel its colour: grassy tops, textured soil, riveted steel plates.
-  colorize(seed) {
+  colorize(seed, grassy = true) {
     const { w, h, mat, px } = this;
     const grass = [hexColor('#7ccf4e'), hexColor('#62b43c'), hexColor('#4c9a30'), hexColor('#3b7d27')];
     const soilA = [0x8b, 0x5a, 0x2b], soilB = [0x5e, 0x3a, 0x1c];
+    const rocky = [hexColor('#b39470'), hexColor('#9c7a55'), hexColor('#7e5d3b')];
     const pebble = hexColor('#b08a5e'), dark = hexColor('#3e2512');
     for (let x = 0; x < w; x++) {
-      let run = 0;
+      let run = 0, fromTop = true;
       for (let y = 0; y < h; y++) {
         const i = y * w + x;
         const m = mat[i];
-        if (m === MAT_EMPTY) { run = 0; px[i] = 0; continue; }
+        if (m === MAT_EMPTY) { run = 0; fromTop = false; px[i] = 0; continue; }
         run++;
         if (m === MAT_STEEL) { px[i] = this.steelColor(x, y); continue; }
-        if (run <= 4) {
+        if (run <= 4 && !fromTop && !grassy) {
+          px[i] = run <= 2 ? rocky[run - 1] : rocky[2];
+          continue;
+        }
+        if (run <= 4 && !fromTop) {
           const jitter = hash2(x, y, seed) < 0.3 ? 1 : 0;
           px[i] = grass[Math.min(3, run - 1 + jitter)];
           continue;
